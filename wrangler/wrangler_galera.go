@@ -9,6 +9,7 @@ import (
 	"fmt"
 	_ "github.com/zhgwenming/gbalancer/Godeps/_workspace/src/github.com/go-sql-driver/mysql"
 	"strings"
+	"github.com/zhgwenming/gbalancer/golog"
 )
 
 // mysql> show status like 'wsrep_%';
@@ -83,7 +84,7 @@ func galeraProbe(user, pass, host, timeout string) (map[string]string, error) {
 			//}
 		}
 		if all {
-			log.Printf("%s %s\n", key, value)
+			golog.Info("Wrangler_galera", "galeraProbe", "%s %s\n", 0, key, value)
 		}
 	}
 
@@ -120,14 +121,14 @@ func (c *Galera) BuildActiveBackends() (map[string]int, error) {
 	for dirIndex, dirAddr := range c.Director {
 		status, err := galeraProbe(c.User, c.Pass, dirAddr, c.Timeout)
 		if err != nil {
-			log.Println(err)
+			golog.Error("Wrangler_galera", "BuildActiveBackends", "", 0, err)
 			continue
 		}
 
 		backends[dirAddr] = FlagUp
 		if dirIndex != 0 {
 			c.Director[0], c.Director[dirIndex] = c.Director[dirIndex], c.Director[0]
-			log.Printf("Make %s as the first director\n", dirAddr)
+			golog.Info("Wrangler_galera", "BuildActiveBackends", "Make %s as the first director\n", 0, dirAddr)
 		}
 
 		if val, ok := status[WsrepAddresses]; ok && val != "" {
@@ -148,12 +149,12 @@ func (c *Galera) BuildActiveBackends() (map[string]int, error) {
 					backends[r.backend] = FlagUp
 					//log.Printf("host: %s\n", r.backend)
 				} else {
-					log.Printf("node not ready: %s", r.err)
+					golog.Error("Wrangler_galera", "BuildActiveBackends", "node not ready: %s", 0, r.err)
 				}
 			}
 			break
 		} else {
-			log.Printf("host %s: %s key doesn't exist in status, not a galera cluster?\n", dirAddr, WsrepAddresses)
+			golog.Error("Wrangler_galera", "BuildActiveBackends", "host %s: %s key doesn't exist in status, not a galera cluster?\n", 0, dirAddr, WsrepAddresses)
 			continue
 		}
 	}

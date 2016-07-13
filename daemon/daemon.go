@@ -7,7 +7,7 @@ package daemon
 import (
 	"flag"
 	"fmt"
-	logger "github.com/zhgwenming/gbalancer/log"
+	"github.com/zhgwenming/gbalancer/golog"
 	"github.com/zhgwenming/gbalancer/utils"
 	"os"
 	"os/signal"
@@ -15,7 +15,6 @@ import (
 )
 
 var (
-	log     = logger.NewLogger()
 	pidFile = flag.String("pidfile", "", "pid file")
 	sigChan = make(chan os.Signal, 1)
 )
@@ -28,7 +27,7 @@ func CreatePidfile() {
 	if *pidFile != "" {
 		if err := utils.WritePid(*pidFile); err != nil {
 			fmt.Printf("error: %s\n", err)
-			log.Fatal("error:", err)
+			golog.Fatal("Daemon", "CreatePidfile", "error:" , 0, err)
 		}
 	}
 }
@@ -36,7 +35,7 @@ func CreatePidfile() {
 func RemovePidfile() {
 	if *pidFile != "" {
 		if err := os.Remove(*pidFile); err != nil {
-			log.Printf("error to remove pidfile %s:", err)
+			golog.Info("Daemon", "RemovePidfile", "error to remove pidfile %s:" , 0, err)
 		}
 	}
 }
@@ -44,7 +43,7 @@ func RemovePidfile() {
 func WaitSignal(cleanup func()) {
 	// waiting for exit signals
 	for sig := range sigChan {
-		log.Printf("captured %v, exiting..", sig)
+		golog.Info("Daemon", "WaitSignal", "captured %v, exiting.." , 0, sig)
 		// exit if we get any signal
 		// Todo - catch signal other than SIGTERM/SIGINT
 		break

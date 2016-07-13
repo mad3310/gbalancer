@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net"
 	"time"
+	"github.com/zhgwenming/gbalancer/golog"
 )
 
 type HealthTcp struct {
@@ -66,7 +67,7 @@ func (t *HealthTcp) BuildActiveBackends() (map[string]int, error) {
 			backends[r.backend] = FlagUp
 			//log.Printf("host: %s\n", r.backend)
 		} else {
-			log.Printf("error: %s", r.err)
+			golog.Error("Wrangler_tcp", "BuildActiveBackends", "error: %s", 0, r.err)
 		}
 	}
 	//log.Printf("Active server: %v\n", backends)

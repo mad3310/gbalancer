@@ -8,6 +8,7 @@ package wrangler
 import (
 	"fmt"
 	"os/exec"
+	"github.com/zhgwenming/gbalancer/golog"
 )
 
 type HealthExt struct {
@@ -60,7 +61,7 @@ func (t *HealthExt) BuildActiveBackends() (map[string]int, error) {
 			backends[r.backend] = FlagUp
 			//log.Printf("host: %s\n", r.backend)
 		} else {
-			log.Printf("ext error: %s", r.err)
+			golog.Error("Wrangler_ext", "BuildActiveBackends", "%s", 0, r.err)
 		}
 	}
 	//log.Printf("Active server: %v\n", backends)

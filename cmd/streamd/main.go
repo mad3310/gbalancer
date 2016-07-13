@@ -8,7 +8,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/zhgwenming/gbalancer/Godeps/_workspace/src/github.com/docker/spdystream"
-	logger "github.com/zhgwenming/gbalancer/log"
+	"github.com/zhgwenming/gbalancer/golog"
 	"github.com/zhgwenming/gbalancer/utils"
 	"net"
 	"os"
@@ -16,15 +16,25 @@ import (
 	"runtime"
 	"sync"
 	"syscall"
+	"path"
+	"strings"
+)
+
+const (
+	VERSION = "0.6.6"
+	sqlLogName = "sql.log"
+	sysLogName = "sys.log"
+	MaxLogSize = 1024 * 1024 * 1024
 )
 
 var (
 	pidFile     = flag.String("pidfile", "", "pid file")
 	listenAddr  = flag.String("listen", ":6900", "port number")
 	serviceAddr = flag.String("to", "/var/lib/mysql/mysql.sock", "service address")
-	log         = logger.NewLogger()
 	sigChan     = make(chan os.Signal, 1)
 	wgroup      = &sync.WaitGroup{}
+	logLevel     = flag.String("log-level", "", "log level [debug|info|warn|error], default error")
+	logPath     =  flag.String("log-path", "/var/log/streamd/", "specify the log path")
 )
 
 func init() {
@@ -35,16 +45,41 @@ func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	flag.Parse()
+	
+	//when the log file size greater than 1GB, kingshard will generate a new file
+	if *logPath != "" {
+		sysFilePath := path.Join(*logPath, sysLogName)
+		sysFile, err := golog.NewRotatingFileHandler(sysFilePath, MaxLogSize, 1)
+		if err != nil {
+			fmt.Printf("new log file error:%v\n", err.Error())
+			return
+		}
+		golog.GlobalSysLogger = golog.New(sysFile, golog.Lfile|golog.Ltime|golog.Llevel)
+
+		sqlFilePath := path.Join(*logPath, sqlLogName)
+		sqlFile, err := golog.NewRotatingFileHandler(sqlFilePath, MaxLogSize, 1)
+		if err != nil {
+			fmt.Printf("new log file error:%v\n", err.Error())
+			return
+		}
+		golog.GlobalSqlLogger = golog.New(sqlFile, golog.Lfile|golog.Ltime|golog.Llevel)
+	}
+
+	if *logLevel != "" {
+		setLogLevel(*logLevel)
+	} else {
+		setLogLevel("error")
+	}
 
 	if *pidFile != "" {
 		if err := utils.WritePid(*pidFile); err != nil {
 			fmt.Printf("error: %s\n", err)
-			log.Printf("error: %s", err)
+			golog.Error("Main", "main", "error: %s" , 0, err)
 			os.Exit(1)
 		}
 		defer func() {
 			if err := os.Remove(*pidFile); err != nil {
-				log.Printf("error to remove pidfile %s:", err)
+				golog.Error("Main", "main", "error to remove pidfile %s:" , 0, err)
 			}
 		}()
 	}
@@ -52,7 +87,7 @@ func main() {
 	listener, err := net.Listen("tcp", *listenAddr)
 	if err != nil {
 		fmt.Printf("Listen error: %s\n", err)
-		log.Printf("Listen error: %s", err)
+		golog.Error("Main", "main", "Listen error: %s" , 0, err)
 		os.Exit(1)
 	}
 	
@@ -62,12 +97,12 @@ func main() {
 		for {
 			conn, err := listener.Accept()
 			if err != nil {
-				log.Printf("Accept error: %s", err)
+				golog.Error("Main", "main", "Accept error: %s" , 0, err)
 			}
 			spdyConn, err := spdystream.NewConnection(conn, true)
 			if err != nil {
 				conn.Close()
-				log.Printf("New spdyConnection error, %s", err)
+				golog.Error("Main", "main", "New spdyConnection error, %s" , 0, err)
 			}
 			spdyConns = append(spdyConns, spdyConn)
 			go spdyConn.Serve(AgentStreamHandler)
@@ -78,7 +113,7 @@ func main() {
 	
 	// waiting for exit signals
 	for sig := range sigChan {
-		log.Printf("captured %v, exiting..", sig)
+		golog.Info("Main", "main", "captured %v, exiting.." , 0, sig)
 		
 		for _, spdyConn := range spdyConns {
 			if nil != spdyConn{
@@ -86,5 +121,21 @@ func main() {
 			}
 		}
 		return
+	}
+}
+
+
+func setLogLevel(level string) {
+	switch strings.ToLower(level) {
+	case "debug":
+		golog.GlobalSysLogger.SetLevel(golog.LevelDebug)
+	case "info":
+		golog.GlobalSysLogger.SetLevel(golog.LevelInfo)
+	case "warn":
+		golog.GlobalSysLogger.SetLevel(golog.LevelWarn)
+	case "error":
+		golog.GlobalSysLogger.SetLevel(golog.LevelError)
+	default:
+		golog.GlobalSysLogger.SetLevel(golog.LevelError)
 	}
 }

@@ -8,6 +8,7 @@ package wrangler
 import (
 	"fmt"
 	"net/http"
+	"github.com/zhgwenming/gbalancer/golog"
 )
 
 type HealthHTTP struct {
@@ -64,7 +65,7 @@ func (t *HealthHTTP) BuildActiveBackends() (map[string]int, error) {
 			backends[r.backend] = FlagUp
 			//log.Printf("host: %s\n", r.backend)
 		} else {
-			log.Printf("http error: %s", r.err)
+			golog.Error("Wrangler_http", "BuildActiveBackends", "http error: %s", 0, r.err)
 		}
 	}
 	//log.Printf("Active server: %v\n", backends)

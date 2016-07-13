@@ -6,14 +6,13 @@ package native
 
 import (
 	"flag"
+	"github.com/zhgwenming/gbalancer/golog"
 	"github.com/zhgwenming/gbalancer/config"
-	logger "github.com/zhgwenming/gbalancer/log"
 	"net"
 	"sync"
 )
 
 var (
-	log        = logger.NewLogger()
 	tunnels    = flag.Uint("tunnels", 0, "number of tunnels per server")
 	streamPort = flag.String("streamport", "6900", "port of the remote stream server")
 	failover   = flag.Bool("failover", false, "whether to enable failover mode for scheduling")
@@ -29,7 +28,7 @@ func Serve(settings *config.Configuration, wgroup *sync.WaitGroup, done chan str
 
 	listenAddrs, err := settings.GetListenAddrs()
 	if err != nil {
-		log.Fatal(err)
+		golog.Fatal("Native", "Serve", "" , 0, err)
 	}
 
 	for _, listenAddr := range listenAddrs {
@@ -40,7 +39,7 @@ func Serve(settings *config.Configuration, wgroup *sync.WaitGroup, done chan str
 		go func() {
 			<-done
 
-			log.Printf("starting clean up connection....")
+			golog.Info("Native", "Serve", "starting clean up connection...." , 0)
 			//close the backends connection for spdy
 			for addr, _ := range sch.backends {
 				sch.RemoveBackend(addr)
@@ -50,7 +49,7 @@ func Serve(settings *config.Configuration, wgroup *sync.WaitGroup, done chan str
 		}()
 
 		if err != nil {
-			log.Fatal(err)
+			golog.Fatal("Native", "Serve", "", 0, err)
 		}
 
 		// tcp/unix listener
@@ -63,10 +62,10 @@ func Serve(settings *config.Configuration, wgroup *sync.WaitGroup, done chan str
 					job <- req
 				} else {
 					if neterr, ok := err.(net.Error); ok && neterr.Temporary() {
-						log.Printf("%s\n", err)
+						golog.Info("Native", "Serve", "%s\n", 0, err)
 					} else {
 						// we should got a errClosing
-						log.Printf("stop listening for %s:%s\n", listen.Net, listen.Addr)
+						golog.Info("Native", "Serve", "stop listening for %s:%s\n", 0, listen.Net, listen.Addr)
 						wgroup.Done()
 						return
 					}

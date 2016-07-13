@@ -8,6 +8,7 @@ import (
 	"container/heap"
 	//splice "github.com/creack/go-splice"
 	"github.com/zhgwenming/gbalancer/utils"
+	"github.com/zhgwenming/gbalancer/golog"
 	"io"
 	"net"
 	"sort"
@@ -64,7 +65,7 @@ func (s *Scheduler) Schedule(job chan *Request, status <-chan map[string]int) {
 			s.finish(back)
 		case backends := <-status:
 			if len(backends) == 0 {
-				log.Printf("balancer: got empty backends list")
+				golog.Info("Scheduler", "Schedule", "balancer: got empty backends list", 0)
 			}
 
 			for addr, b := range s.backends {
@@ -75,7 +76,7 @@ func (s *Scheduler) Schedule(job chan *Request, status <-chan map[string]int) {
 					delete(backends, addr)
 					// push back backend with error in run()
 					if b.index == -1 {
-						log.Printf("balancer: bring back %s to up\n", b.address)
+						golog.Info("Scheduler", "Schedule", "balancer: bring back %s to up\n", 0, b.address)
 						heap.Push(&s.pool, s.backends[addr])
 					}
 				}
@@ -149,7 +150,7 @@ func (s *Scheduler) dispatch(req *Request) {
 	// add to pending list
 	if len(s.pool.backends) == 0 {
 		s.pending = append(s.pending, req)
-		log.Printf("No backend available\n")
+		golog.Info("Scheduler", "dispatch", "No backend available\n", 0)
 		return
 	}
 	//log.Println("Got a connection")
@@ -158,7 +159,7 @@ func (s *Scheduler) dispatch(req *Request) {
 	if b.ongoing >= MaxForwardersPerBackend {
 		heap.Push(&s.pool, b)
 		req.Conn.Close()
-		log.Printf("all backend forwarders exceed %d\n", MaxForwardersPerBackend)
+		golog.Info("Scheduler", "dispatch", "all backend forwarders exceed %d\n", 0, MaxForwardersPerBackend)
 		return
 	}
 
@@ -235,7 +236,7 @@ func (s *Scheduler) finish(req *Request) {
 		if e, ok := err.(*net.OpError); ok && e.Op == "dial" {
 			// detected the connection error
 			// keep it out of the heap and try to reschedule the job
-			log.Printf("%s, rescheduling request %v\n", err, req)
+			golog.Info("Scheduler", "finish", "%s, rescheduling request %v\n", 0, err, req)
 			s.dispatch(req)
 		}
 	} else {
@@ -253,13 +254,13 @@ func (s *Scheduler) finish(req *Request) {
 
 func (s *Scheduler) AddBackend(b *Backend) {
 	addr := b.address
-	log.Printf("balancer: bring up %s.\n", addr)
+	golog.Info("Scheduler", "AddBackend", "balancer: bring up %s.\n", 0, addr)
 	s.backends[addr] = b
 	heap.Push(&s.pool, b)
 }
 
 func (s *Scheduler) RemoveBackend(addr string) {
-	log.Printf("balancer: take down %s.\n", addr)
+	golog.Info("Scheduler", "RemoveBackend", "balancer: take down %s.\n", 0, addr)
 	if b, ok := s.backends[addr]; ok {
 		// the backend might be already removed from the heap
 		if b.index != -1 {
@@ -271,7 +272,7 @@ func (s *Scheduler) RemoveBackend(addr string) {
 		}
 		delete(s.backends, b.address)
 	} else {
-		log.Printf("balancer: %s is not up, bug might exist!", addr)
+		golog.Error("Scheduler", "RemoveBackend", "balancer: %s is not up, bug might exist!", 0, addr)
 	}
 
 }

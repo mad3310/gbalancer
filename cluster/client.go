@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"github.com/zhgwenming/gbalancer/Godeps/_workspace/src/github.com/coreos/go-etcd/etcd"
 	"github.com/zhgwenming/gbalancer/utils"
-	"log"
+	"github.com/zhgwenming/gbalancer/golog"
 	"os"
 	"path"
 	"strconv"

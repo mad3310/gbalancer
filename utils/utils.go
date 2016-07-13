@@ -6,7 +6,6 @@ package utils
 
 import (
 	"fmt"
-	logger "github.com/zhgwenming/gbalancer/log"
 	"math/rand"
 	"net"
 	"os"
@@ -14,10 +13,8 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
-)
-
-var (
-	log = logger.NewLogger()
+	
+	"github.com/zhgwenming/gbalancer/golog"
 )
 
 func RunCommand(cmd string) error {
@@ -25,7 +22,7 @@ func RunCommand(cmd string) error {
 	output, err := exec.Command(args[0], args[1:]...).CombinedOutput()
 	if err != nil {
 		err = fmt.Errorf("Err: %s Output: %s, Cmd %s", err, output, cmd)
-		log.Printf("%s", err)
+		golog.Error("Utils", "RunCommand", "RunCommand's error is ", 0, err)
 	}
 	return err
 }
@@ -56,7 +53,7 @@ iface:
 				ipnet, ok := ipaddr.(*net.IPNet)
 
 				if !ok {
-					log.Fatal("assertion err: %v\n", ipnet)
+					golog.Fatal("Utils", "GetFirstIPAddr", "assertion err: %v\n" , 0, ipnet)
 				}
 
 				ip4 := ipnet.IP.To4()
@@ -72,7 +69,7 @@ iface:
 			}
 		}
 	}
-	log.Printf("Found local ip4 %v", addr)
+	golog.Info("Utils", "GetFirstIPAddr", "Found local ip4 %v" , 0, addr)
 	return
 }
 
@@ -82,7 +79,7 @@ func GetIPAddrs() (addresses []string) {
 		ipnet, ok := i.(*net.IPNet)
 
 		if !ok {
-			log.Fatal("assertion err: ", i)
+			golog.Info("Utils", "GetIPAddrs", "assertion err: " , 0, i)
 		}
 
 		ip4 := ipnet.IP.To4()

@@ -58,7 +58,7 @@ type Logger struct {
 }
 
 //new a logger with specified handler and flag
-func New(handler Handler, flag int) *Logger {
+func New(handler Handler, flag int, wgroup *sync.WaitGroup) *Logger {
 	var l = new(Logger)
 
 	l.level = LevelInfo
@@ -72,7 +72,9 @@ func New(handler Handler, flag int) *Logger {
 	l.msg = make(chan []byte, 1024)
 
 	l.bufs = make([][]byte, 0, 16)
-
+	
+	l.wg = wgroup
+	
 	l.wg.Add(1)
 	go l.run()
 

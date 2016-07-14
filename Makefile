@@ -1,6 +1,6 @@
 .PHONY: all rhel7
 
-all: gbalancer
+all: clean gbalancer
 
 GOPATH = $(PWD)/build
 GOBIN = 

@@ -48,9 +48,6 @@ func (c *Galera) AddDirector(backend string) error {
 }
 
 func galeraProbe(user, pass, host, timeout string) (map[string]string, error) {
-	// debug purpose
-	all := false
-
 	var wsrep_status = map[string]string{
 		WsrepConnected: "",
 		WsrepAddresses: "",
@@ -62,14 +59,14 @@ func galeraProbe(user, pass, host, timeout string) (map[string]string, error) {
 
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
-		//log.Printf("%s\n", err)
+		golog.Error("Wrangler_galera", "galeraProbe", fmt.Sprintf("connect mysql occurs error: %s", err), 0)
 		return wsrep_status, err
 	}
 	defer db.Close()
 
 	rows, err := db.Query("show status like 'wsrep_%'")
 	if err != nil {
-		//log.Printf("%s\n", err)
+		golog.Error("Wrangler_galera", "galeraProbe", fmt.Sprintf("db query show status result occurs error: %s", err), 0)
 		return wsrep_status, err
 	}
 
@@ -79,13 +76,8 @@ func galeraProbe(user, pass, host, timeout string) (map[string]string, error) {
 		err = rows.Scan(&key, &value)
 		if _, ok := wsrep_status[key]; ok {
 			wsrep_status[key] = value
-			//if !all {
-			//	log.Printf("%s %s\n", key, value)
-			//}
 		}
-		if all {
-			golog.Info("Wrangler_galera", "galeraProbe", "%s %s\n", 0, key, value)
-		}
+		golog.Debug("Wrangler_galera", "galeraProbe", fmt.Sprintf("%s %s", key, value), 0)
 	}
 
 	err = fmt.Errorf("Galera Not Connected")
@@ -113,22 +105,22 @@ func (c *Galera) BuildActiveBackends() (map[string]int, error) {
 	probe := func(user, pass, addr string) {
 		_, err := galeraProbe(c.User, c.Pass, addr, c.Timeout)
 		results <- backendStatus{addr, err}
-		//if err != nil {
-		//	log.Printf("probe: %s\n", err)
-		//}
+		if err != nil {
+			golog.Error("Wrangler_galera", "BuildActiveBackends", fmt.Sprintf("probe: %s", err), 0)
+		}
 	}
 
 	for dirIndex, dirAddr := range c.Director {
 		status, err := galeraProbe(c.User, c.Pass, dirAddr, c.Timeout)
 		if err != nil {
-			golog.Error("Wrangler_galera", "BuildActiveBackends", "", 0, err)
+			golog.Error("Wrangler_galera", "BuildActiveBackends", fmt.Sprintf("%s", err), 0)
 			continue
 		}
 
 		backends[dirAddr] = FlagUp
 		if dirIndex != 0 {
 			c.Director[0], c.Director[dirIndex] = c.Director[dirIndex], c.Director[0]
-			golog.Info("Wrangler_galera", "BuildActiveBackends", "Make %s as the first director\n", 0, dirAddr)
+			golog.Info("Wrangler_galera", "BuildActiveBackends", fmt.Sprintf("Make %s as the first director", dirAddr), 0)
 		}
 
 		if val, ok := status[WsrepAddresses]; ok && val != "" {
@@ -149,12 +141,12 @@ func (c *Galera) BuildActiveBackends() (map[string]int, error) {
 					backends[r.backend] = FlagUp
 					//log.Printf("host: %s\n", r.backend)
 				} else {
-					golog.Error("Wrangler_galera", "BuildActiveBackends", "node not ready: %s", 0, r.err)
+					golog.Error("Wrangler_galera", "BuildActiveBackends", fmt.Sprintf("node not ready: %s", r.err), 0)
 				}
 			}
 			break
 		} else {
-			golog.Error("Wrangler_galera", "BuildActiveBackends", "host %s: %s key doesn't exist in status, not a galera cluster?\n", 0, dirAddr, WsrepAddresses)
+			golog.Error("Wrangler_galera", "BuildActiveBackends", fmt.Sprintf("host %s: %s key doesn't exist in status, not a galera cluster?", dirAddr, WsrepAddresses), 0)
 			continue
 		}
 	}

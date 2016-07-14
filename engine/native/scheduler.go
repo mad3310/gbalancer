@@ -12,6 +12,7 @@ import (
 	"io"
 	"net"
 	"sort"
+	"fmt"
 )
 
 type Request struct {
@@ -76,7 +77,7 @@ func (s *Scheduler) Schedule(job chan *Request, status <-chan map[string]int) {
 					delete(backends, addr)
 					// push back backend with error in run()
 					if b.index == -1 {
-						golog.Info("Scheduler", "Schedule", "balancer: bring back %s to up\n", 0, b.address)
+						golog.Info("Scheduler", "Schedule", fmt.Sprintf("balancer: bring back %s to up", b.address), 0)
 						heap.Push(&s.pool, s.backends[addr])
 					}
 				}
@@ -150,7 +151,7 @@ func (s *Scheduler) dispatch(req *Request) {
 	// add to pending list
 	if len(s.pool.backends) == 0 {
 		s.pending = append(s.pending, req)
-		golog.Info("Scheduler", "dispatch", "No backend available\n", 0)
+		golog.Info("Scheduler", "dispatch", "No backend available", 0)
 		return
 	}
 	//log.Println("Got a connection")
@@ -159,7 +160,7 @@ func (s *Scheduler) dispatch(req *Request) {
 	if b.ongoing >= MaxForwardersPerBackend {
 		heap.Push(&s.pool, b)
 		req.Conn.Close()
-		golog.Info("Scheduler", "dispatch", "all backend forwarders exceed %d\n", 0, MaxForwardersPerBackend)
+		golog.Info("Scheduler", "dispatch", fmt.Sprintf("all backend forwarders exceed %d", MaxForwardersPerBackend), 0)
 		return
 	}
 
@@ -236,7 +237,7 @@ func (s *Scheduler) finish(req *Request) {
 		if e, ok := err.(*net.OpError); ok && e.Op == "dial" {
 			// detected the connection error
 			// keep it out of the heap and try to reschedule the job
-			golog.Info("Scheduler", "finish", "%s, rescheduling request %v\n", 0, err, req)
+			golog.Info("Scheduler", "finish", fmt.Sprintf("%s, rescheduling request %v", err, req), 0)
 			s.dispatch(req)
 		}
 	} else {
@@ -254,13 +255,13 @@ func (s *Scheduler) finish(req *Request) {
 
 func (s *Scheduler) AddBackend(b *Backend) {
 	addr := b.address
-	golog.Info("Scheduler", "AddBackend", "balancer: bring up %s.\n", 0, addr)
+	golog.Info("Scheduler", "AddBackend", fmt.Sprintf("balancer: bring up %s.", addr), 0)
 	s.backends[addr] = b
 	heap.Push(&s.pool, b)
 }
 
 func (s *Scheduler) RemoveBackend(addr string) {
-	golog.Info("Scheduler", "RemoveBackend", "balancer: take down %s.\n", 0, addr)
+	golog.Info("Scheduler", "RemoveBackend", fmt.Sprintf("balancer: take down %s.", addr), 0)
 	if b, ok := s.backends[addr]; ok {
 		// the backend might be already removed from the heap
 		if b.index != -1 {
@@ -272,7 +273,7 @@ func (s *Scheduler) RemoveBackend(addr string) {
 		}
 		delete(s.backends, b.address)
 	} else {
-		golog.Error("Scheduler", "RemoveBackend", "balancer: %s is not up, bug might exist!", 0, addr)
+		golog.Error("Scheduler", "RemoveBackend", fmt.Sprintf("balancer: %s is not up, bug might exist!", addr), 0)
 	}
 
 }

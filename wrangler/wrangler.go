@@ -9,6 +9,7 @@ import (
 	"github.com/zhgwenming/gbalancer/golog"
 	"os"
 	"time"
+	"fmt"
 )
 
 type healthDriver interface {
@@ -38,7 +39,7 @@ func NewWrangler(config *config.Configuration, back chan<- map[string]int) *Wran
 			os.Exit(1)
 		}
 	default:
-		golog.Error("Wrangler", "NewWrangler", "Unknown healthy monitor: %s", 0, config.Service)
+		golog.Error("Wrangler", "NewWrangler", fmt.Sprintf("Unknown healthy monitor: %s", config.Service), 0)
 		os.Exit(1)
 	}
 
@@ -53,7 +54,7 @@ func NewWrangler(config *config.Configuration, back chan<- map[string]int) *Wran
 func (w *Wrangler) ValidBackends() {
 	backends, err := w.healthExec.BuildActiveBackends()
 	if err != nil {
-		golog.Error("Wrangler", "ValidBackends", "wrangler: %s\n", 0, err)
+		golog.Error("Wrangler", "ValidBackends", fmt.Sprintf("%s", err), 0)
 		return
 	}
 
@@ -63,14 +64,14 @@ func (w *Wrangler) ValidBackends() {
 	for b := range w.Backends {
 		if _, ok := backends[b]; !ok {
 			delete(w.Backends, b)
-			golog.Info("Wrangler", "ValidBackends", "detected server %s is down\n", 0, b)
+			golog.Info("Wrangler", "ValidBackends", fmt.Sprintf("detected server %s is down", b), 0)
 		}
 	}
 
 	// add new backends
 	for b := range backends {
 		if _, ok := w.Backends[b]; !ok {
-			golog.Info("Wrangler", "ValidBackends", "detected server %s is up\n", 0, b)
+			golog.Info("Wrangler", "ValidBackends", fmt.Sprintf("detected server %s is up", b), 0)
 			w.Backends[b] = backends[b]
 		}
 	}

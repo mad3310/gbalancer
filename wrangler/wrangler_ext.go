@@ -35,7 +35,7 @@ func (t *HealthExt) BuildActiveBackends() (map[string]int, error) {
 	backends := make(map[string]int, MaxBackends)
 
 	if len(t.Director) == 0 {
-		return backends, fmt.Errorf("Empty directory server list\n")
+		return backends, fmt.Errorf("Empty directory server list")
 	}
 
 	type backendStatus struct {
@@ -61,7 +61,7 @@ func (t *HealthExt) BuildActiveBackends() (map[string]int, error) {
 			backends[r.backend] = FlagUp
 			//log.Printf("host: %s\n", r.backend)
 		} else {
-			golog.Error("Wrangler_ext", "BuildActiveBackends", "%s", 0, r.err)
+			golog.Error("Wrangler_ext", "BuildActiveBackends", fmt.Sprintf("%s", r.err), 0)
 		}
 	}
 	//log.Printf("Active server: %v\n", backends)

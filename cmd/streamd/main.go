@@ -73,21 +73,19 @@ func main() {
 
 	if *pidFile != "" {
 		if err := utils.WritePid(*pidFile); err != nil {
-			fmt.Printf("error: %s\n", err)
-			golog.Error("Main", "main", "error: %s" , 0, err)
+			golog.Error("Main", "main", fmt.Sprintf("%s", err), 0)
 			os.Exit(1)
 		}
 		defer func() {
 			if err := os.Remove(*pidFile); err != nil {
-				golog.Error("Main", "main", "error to remove pidfile %s:" , 0, err)
+				golog.Error("Main", "main", fmt.Sprintf("error to remove pidfile %s:", err), 0)
 			}
 		}()
 	}
 
 	listener, err := net.Listen("tcp", *listenAddr)
 	if err != nil {
-		fmt.Printf("Listen error: %s\n", err)
-		golog.Error("Main", "main", "Listen error: %s" , 0, err)
+		golog.Error("Main", "main", fmt.Sprintf("Listen error: %s", err), 0)
 		os.Exit(1)
 	}
 	
@@ -97,12 +95,12 @@ func main() {
 		for {
 			conn, err := listener.Accept()
 			if err != nil {
-				golog.Error("Main", "main", "Accept error: %s" , 0, err)
+				golog.Error("Main", "main", fmt.Sprintf("Accept error: %s", err), 0)
 			}
 			spdyConn, err := spdystream.NewConnection(conn, true)
 			if err != nil {
 				conn.Close()
-				golog.Error("Main", "main", "New spdyConnection error, %s" , 0, err)
+				golog.Error("Main", "main", fmt.Sprintf("New spdyConnection error, %s", err), 0)
 			}
 			spdyConns = append(spdyConns, spdyConn)
 			go spdyConn.Serve(AgentStreamHandler)
@@ -113,7 +111,7 @@ func main() {
 	
 	// waiting for exit signals
 	for sig := range sigChan {
-		golog.Info("Main", "main", "captured %v, exiting.." , 0, sig)
+		golog.Info("Main", "main", fmt.Sprintf("captured %v, exiting..", sig), 0)
 		
 		for _, spdyConn := range spdyConns {
 			if nil != spdyConn{

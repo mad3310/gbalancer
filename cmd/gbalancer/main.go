@@ -80,8 +80,7 @@ func main() {
 	// Load configurations
 	settings, err := config.LoadConfig(*configFile)
 	if err != nil {
-		fmt.Printf("error: %s\n", err)
-		golog.Fatal("Main", "main", "error:" , 0, err)
+		golog.Fatal("Main", "main", fmt.Sprintf("%s", err), 0)
 	}
 	golog.Info("Main", "main", settings.ListenInfo() , 0)
 

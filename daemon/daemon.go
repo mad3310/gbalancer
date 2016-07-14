@@ -27,7 +27,7 @@ func CreatePidfile() {
 	if *pidFile != "" {
 		if err := utils.WritePid(*pidFile); err != nil {
 			fmt.Printf("error: %s\n", err)
-			golog.Fatal("Daemon", "CreatePidfile", "error:" , 0, err)
+			golog.Fatal("Daemon", "CreatePidfile", fmt.Sprintf("%s", err) , 0)
 		}
 	}
 }
@@ -35,7 +35,7 @@ func CreatePidfile() {
 func RemovePidfile() {
 	if *pidFile != "" {
 		if err := os.Remove(*pidFile); err != nil {
-			golog.Info("Daemon", "RemovePidfile", "error to remove pidfile %s:" , 0, err)
+			golog.Info("Daemon", "RemovePidfile", fmt.Sprintf("error to remove pidfile %s:", err) , 0)
 		}
 	}
 }
@@ -43,7 +43,7 @@ func RemovePidfile() {
 func WaitSignal(cleanup func()) {
 	// waiting for exit signals
 	for sig := range sigChan {
-		golog.Info("Daemon", "WaitSignal", "captured %v, exiting.." , 0, sig)
+		golog.Info("Daemon", "WaitSignal", fmt.Sprintf("captured %v, exiting..", sig) , 0)
 		// exit if we get any signal
 		// Todo - catch signal other than SIGTERM/SIGINT
 		break

@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"strings"
+	"fmt"
 	"github.com/zhgwenming/gbalancer/golog"
 )
 
@@ -36,7 +37,7 @@ func AgentStreamHandler(stream *spdystream.Stream) {
 	//conn, err := net.Dial("tcp", "10.100.91.74:3306")
 
 	if err != nil {
-		golog.Error("handler", "AgentStreamHandler", "Failed: %s\n" , 0, err)
+		golog.Error("handler", "AgentStreamHandler", fmt.Sprintf("streamd dial occurs error: %s", err), 0)
 		return
 	}
 

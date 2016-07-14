@@ -22,7 +22,7 @@ func RunCommand(cmd string) error {
 	output, err := exec.Command(args[0], args[1:]...).CombinedOutput()
 	if err != nil {
 		err = fmt.Errorf("Err: %s Output: %s, Cmd %s", err, output, cmd)
-		golog.Error("Utils", "RunCommand", "RunCommand's error is ", 0, err)
+		golog.Error("Utils", "RunCommand", fmt.Sprintf("%v", err), 0)
 	}
 	return err
 }
@@ -53,7 +53,7 @@ iface:
 				ipnet, ok := ipaddr.(*net.IPNet)
 
 				if !ok {
-					golog.Fatal("Utils", "GetFirstIPAddr", "assertion err: %v\n" , 0, ipnet)
+					golog.Fatal("Utils", "GetFirstIPAddr", fmt.Sprintf("assertion err: %v", ipnet) , 0)
 				}
 
 				ip4 := ipnet.IP.To4()
@@ -69,7 +69,7 @@ iface:
 			}
 		}
 	}
-	golog.Info("Utils", "GetFirstIPAddr", "Found local ip4 %v" , 0, addr)
+	golog.Info("Utils", "GetFirstIPAddr", fmt.Sprintf("Found local ip4 %v", addr) , 0)
 	return
 }
 

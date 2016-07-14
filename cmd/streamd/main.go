@@ -120,6 +120,10 @@ func main() {
 				spdyConn.Close()
 			}
 		}
+		
+		golog.GlobalSysLogger.Close()
+		golog.GlobalSqlLogger.Close()
+		
 		return
 	}
 }

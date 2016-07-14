@@ -5,3 +5,4 @@ galerabalancer
 *.rpm
 .*.swp
 build/
+/.project

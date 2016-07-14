@@ -60,7 +60,7 @@ func main() {
 			fmt.Printf("new log file error:%v\n", err.Error())
 			return
 		}
-		golog.GlobalSysLogger = golog.New(sysFile, golog.Lfile|golog.Ltime|golog.Llevel, wgroup)
+		golog.GlobalSysLogger = golog.New(sysFile, golog.Lfile|golog.Ltime|golog.Llevel)
 
 		sqlFilePath := path.Join(*logPath, sqlLogName)
 		sqlFile, err := golog.NewRotatingFileHandler(sqlFilePath, MaxLogSize, 1)
@@ -68,7 +68,7 @@ func main() {
 			fmt.Printf("new log file error:%v\n", err.Error())
 			return
 		}
-		golog.GlobalSqlLogger = golog.New(sqlFile, golog.Lfile|golog.Ltime|golog.Llevel, wgroup)
+		golog.GlobalSqlLogger = golog.New(sqlFile, golog.Lfile|golog.Ltime|golog.Llevel)
 	}
 
 	if *logLevel != "" {

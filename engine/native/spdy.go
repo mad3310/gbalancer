@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 	"github.com/zhgwenming/gbalancer/golog"
+	"fmt"
 )
 
 const (
@@ -46,7 +47,7 @@ func NewConnTunnel(conn net.Conn) *connTunnel {
 	} else {
 		spdy, err := spdystream.NewConnection(conn, false)
 		if err != nil {
-			golog.Error("Spdy", "NewConnTunnel", "spdystream create connection error: %s", 0, err)
+			golog.Error("Spdy", "NewConnTunnel", fmt.Sprintf("spdystream create connection error: %s", err), 0)
 			return nil
 		}
 
@@ -78,7 +79,7 @@ func CreateSpdySession(request *spdySession, ready chan<- *spdySession) {
 		addrs := strings.Split(request.backend.address, ":")
 		if conn, err := NewStreamConn(addrs[0], *streamPort); err == nil {
 			request.spdy = conn
-			golog.Info("Spdy", "CreateSpdySession", "Created new session for: %s", 0, request.backend.address)
+			golog.Info("Spdy", "CreateSpdySession", fmt.Sprintf("Created new session for: %s", request.backend.address), 0)
 			break
 		}
 		time.Sleep(time.Second)

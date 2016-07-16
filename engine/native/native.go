@@ -10,6 +10,7 @@ import (
 	"github.com/zhgwenming/gbalancer/config"
 	"net"
 	"sync"
+	"fmt"
 )
 
 var (
@@ -49,7 +50,7 @@ func Serve(settings *config.Configuration, wgroup *sync.WaitGroup, done chan str
 		}()
 
 		if err != nil {
-			golog.Fatal("Native", "Serve", "", 0, err)
+			golog.Fatal("Native", "Serve", fmt.Sprintf("%s", err), 0)
 		}
 
 		// tcp/unix listener
@@ -62,10 +63,10 @@ func Serve(settings *config.Configuration, wgroup *sync.WaitGroup, done chan str
 					job <- req
 				} else {
 					if neterr, ok := err.(net.Error); ok && neterr.Temporary() {
-						golog.Info("Native", "Serve", "%s\n", 0, err)
+						golog.Info("Native", "Serve", fmt.Sprintf("%s", err), 0)
 					} else {
 						// we should got a errClosing
-						golog.Info("Native", "Serve", "stop listening for %s:%s\n", 0, listen.Net, listen.Addr)
+						golog.Info("Native", "Serve", fmt.Sprintf("stop listening for %s:%s", listen.Net, listen.Addr), 0)
 						wgroup.Done()
 						return
 					}

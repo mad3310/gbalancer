@@ -55,14 +55,6 @@ func main() {
 			return
 		}
 		golog.GlobalSysLogger = golog.New(sysFile, golog.Lfile|golog.Ltime|golog.Llevel)
-
-		sqlFilePath := path.Join(*logPath, sqlLogName)
-		sqlFile, err := golog.NewRotatingFileHandler(sqlFilePath, MaxLogSize, 1)
-		if err != nil {
-			fmt.Printf("new log file error:%v\n", err.Error())
-			return
-		}
-		golog.GlobalSqlLogger = golog.New(sqlFile, golog.Lfile|golog.Ltime|golog.Llevel)
 	}
 
 	if *logLevel != "" {
@@ -107,7 +99,7 @@ func main() {
 		}
 	}()
 	
-	fmt.Printf("starting clean up connections...")
+	golog.Info("Main", "main", fmt.Printf("starting clean up connections..."), 0)
 	
 	// waiting for exit signals
 	for sig := range sigChan {
@@ -120,7 +112,6 @@ func main() {
 		}
 		
 		golog.GlobalSysLogger.Close()
-		golog.GlobalSqlLogger.Close()
 		
 		return
 	}

@@ -21,7 +21,7 @@ type copyRet struct {
 
 func streamCopy(dst io.WriteCloser, src io.Reader) {
 	io.Copy(dst, src)
-	dst.Close()
+	defer dst.Close()
 }
 
 // Tunnel Handler
@@ -43,6 +43,7 @@ func AgentStreamHandler(stream *spdystream.Stream) {
 
 	replyErr := stream.SendReply(http.Header{}, false)
 	if replyErr != nil {
+		golog.Error("handler", "AgentStreamHandler", fmt.Sprintf("stream sendReply occurs error: %s", replyErr), 0)
 		return
 	}
 
@@ -50,6 +51,7 @@ func AgentStreamHandler(stream *spdystream.Stream) {
 	go func() {
 		for {
 			if _, err := stream.ReceiveHeader(); err != nil {
+				golog.Error("handler", "AgentStreamHandler", fmt.Sprintf("stream ReceiveHeader occurs error: %s", err), 0)
 				return
 			}
 		}

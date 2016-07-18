@@ -73,6 +73,8 @@ func (b *Backend) SpdyCheckStreamId(backChan chan<- *spdySession) {
 	// for whatever cases
 	// increase the count number first
 	b.count++
+	
+	var err error
 
 	if b.tunnels == 0 || time.Since(spdyCheckTime) < 5*time.Second {
 		return
@@ -87,8 +89,14 @@ func (b *Backend) SpdyCheckStreamId(backChan chan<- *spdySession) {
 			if !tunnel[index].switching {
 				// check to see if the spdyConn needed to be switched
 				if uint32(tunnel[index].conn.PeekNextStreamId()) > ThreshStreamId {
-					golog.Info("Backend", "SpdyCheckStreamId", "pre-create new session for %s" , 0, b.address)
+					golog.Info("Backend", "SpdyCheckStreamId", fmt.Sprintf("pre-create new session for %s", b.address) , 0)
 					tunnel[index].switching = true
+					go CreateSpdySession(NewSpdySession(b, index), backChan)
+				}
+				
+				// check the tunnel is available
+				if _, err = tunnel[index].conn.Ping(); err != nil {
+					golog.Info("Backend", "SpdyCheckStreamId", fmt.Sprintf("tunnel ping is not available for  %s", b.address) , 0)
 					go CreateSpdySession(NewSpdySession(b, index), backChan)
 				}
 			}
@@ -123,9 +131,9 @@ func (b *Backend) ForwarderNewConnection(req *Request) (net.Conn, error) {
 				if swapped {
 					if conn == nil {
 						// streamId used up
-						golog.Error("Backend", "ForwarderNewConnection", "Used up streamdID. (%s)" , 0, err)
+						golog.Error("Backend", "ForwarderNewConnection", fmt.Sprintf("Used up streamdID. (%s)", err) , 0)
 					} else {
-						golog.Info("Backend", "ForwarderNewConnection", "Failed to create stream. (%s)" , 0, err)
+						golog.Info("Backend", "ForwarderNewConnection", fmt.Sprintf("Failed to create stream. (%s)", err) , 0)
 					}
 
 					// try to close exist session
@@ -142,7 +150,7 @@ func (b *Backend) ForwarderNewConnection(req *Request) (net.Conn, error) {
 		// just log error if we have at lease one connection in the tunnel
 		// if we don't, just fall back to tcp mode silently
 		if found {
-			golog.Info("Backend", "ForwarderNewConnection", "Failed to create stream, rolling back to tcp mode. (%s)" , 0, err)
+			golog.Info("Backend", "ForwarderNewConnection", fmt.Sprintf("Failed to create stream, rolling back to tcp mode. (%s)", err), 0)
 		}
 		conn, err = net.Dial("tcp", req.backend.address)
 	}

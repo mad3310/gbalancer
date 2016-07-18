@@ -99,7 +99,7 @@ func main() {
 		}
 	}()
 	
-	golog.Info("Main", "main", fmt.Printf("starting clean up connections..."), 0)
+	golog.Info("Main", "main", "starting clean up connections...", 0)
 	
 	// waiting for exit signals
 	for sig := range sigChan {
@@ -110,6 +110,8 @@ func main() {
 				spdyConn.Close()
 			}
 		}
+		
+		listener.Close()
 		
 		golog.GlobalSysLogger.Close()
 		

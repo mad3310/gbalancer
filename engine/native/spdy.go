@@ -33,33 +33,35 @@ func NewSpdySession(backend *Backend, index uint) *spdySession {
 	return &spdySession{backend: backend, connindex: index}
 }
 
-func NewConnTunnel(conn net.Conn) *connTunnel {
+func NewConnTunnel(conn net.Conn) (*connTunnel,error) {
 	var spdyconn *connTunnel
+	
+	err := fmt.Errorf("create conn tunnel processing occurs error")
 
 	if conn == nil {
-		return nil
+		return nil, nil
 	}
 
 	addr := conn.LocalAddr()
 
 	if tcpaddr, ok := addr.(*net.TCPAddr); !ok {
-		return nil
+		return nil, err
 	} else {
 		spdy, err := spdystream.NewConnection(conn, false)
 		if err != nil {
 			golog.Error("Spdy", "NewConnTunnel", fmt.Sprintf("spdystream create connection error: %s", err), 0)
-			return nil
+			return nil, err
 		}
 
 		go spdy.Serve(spdystream.NoOpStreamHandler)
 		if _, err = spdy.Ping(); err != nil {
-			return nil
+			return nil, err
 		}
 
 		spdyconn = &connTunnel{conn: spdy, tcpAddr: tcpaddr, switching: false}
 	}
 
-	return spdyconn
+	return spdyconn, nil
 }
 
 func NewStreamConn(addr, port string) (*connTunnel, error) {
@@ -69,9 +71,9 @@ func NewStreamConn(addr, port string) (*connTunnel, error) {
 		return nil, err
 	}
 
-	connTunnel := NewConnTunnel(conn)
+	connTunnel, err := NewConnTunnel(conn)
 
-	return connTunnel, nil
+	return connTunnel, err
 }
 
 func CreateSpdySession(request *spdySession, ready chan<- *spdySession) {

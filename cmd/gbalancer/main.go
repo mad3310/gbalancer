@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	VERSION = "0.6.6"
+	VERSION = "0.6.7"
 	sqlLogName = "sql.log"
 	sysLogName = "sys.log"
 	MaxLogSize = 1024 * 1024 * 1024

@@ -51,7 +51,7 @@ func AgentStreamHandler(stream *spdystream.Stream) {
 	go func() {
 		for {
 			if _, err := stream.ReceiveHeader(); err != nil {
-				golog.Error("handler", "AgentStreamHandler", fmt.Sprintf("stream ReceiveHeader occurs error: %s", err), 0)
+//				golog.Error("handler", "AgentStreamHandler", fmt.Sprintf("stream ReceiveHeader occurs error: %s", err), 0)
 				return
 			}
 		}

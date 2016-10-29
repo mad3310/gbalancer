@@ -9,10 +9,12 @@ import (
 	//splice "github.com/creack/go-splice"
 	"github.com/zhgwenming/gbalancer/utils"
 	"github.com/zhgwenming/gbalancer/golog"
+//	"github.com/zhgwenming/gbalancer/core"
 	"io"
 	"net"
 	"sort"
 	"fmt"
+	"io/ioutil"
 )
 
 type Request struct {
@@ -183,16 +185,21 @@ type copyRet struct {
 //}
 
 func sockCopy(dst io.WriteCloser, src io.Reader, c chan *copyRet) {
+//	n, err := bufioprop.Copy(dst, src, 32*1024)
 	n, err := io.Copy(dst, src)
+	if err != nil {
+		golog.Error("Scheduler", "sockCopy", fmt.Sprintf("io.Copy error message: %s", err), 0)
+        io.Copy(ioutil.Discard, src)
+	}
 	//log.Printf("sent %d bytes to server", n)
 
 	// make backend read stream ended
 
-	//conn := dst.(net.Conn)
-	//conn.SetReadDeadline(time.Now())
+    //conn := dst.(net.Conn)
+    //conn.SetReadDeadline(time.Now())
 
 	// Close the upstream connection as Deadline
-	// not yet supported by spdystream by now
+	// not yet supported by spdystream by now.
 	dst.Close()
 	c <- &copyRet{n, err}
 }

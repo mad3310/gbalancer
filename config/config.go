@@ -11,7 +11,7 @@ import (
 	"strings"
 	"io/ioutil"
 	
-	"github.com/zhangwenming/gbalancer/core/yaml"
+	"github.com/zhgwenming/gbalancer/core/yaml"
 )
 
 const (

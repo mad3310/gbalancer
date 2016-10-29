@@ -6,3 +6,4 @@ galerabalancer
 .*.swp
 build/
 /.project
+/.settings/
